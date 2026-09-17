@@ -11,7 +11,7 @@ function createBot() {
     bot.on('spawn', () => {
         console.log(`[NPC] El bot ha aparecido correctamente en el mapa.`);
         // Si tu servidor No-Premium requiere contraseña, descomenta la línea de abajo:
-        // setTimeout(() => bot.chat('/login erickJKN'), 4000);
+        setTimeout(() => bot.chat('/login 123456'), 4000);
     });
 
     bot.on('login', () => {
