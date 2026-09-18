@@ -4,7 +4,7 @@ function createBot() {
     console.log('[BOT] Intentando conectar...');
 
     const bot = mineflayer.createBot({
-        host: 'survivalpigsaw.aternos.me:30396',
+        host: 'survivalpigsaw.aternos.me',
         port: 30396,
         username: 'BotterPilly',
         version: '1.21.1', // 1. RECOMENDADO: Pon la versión EXACTA de tu servidor en vez de 'false'
