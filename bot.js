@@ -2,68 +2,76 @@ const mineflayer = require('mineflayer');
 
 function createBot() {
     const bot = mineflayer.createBot({
-        host: 'survivalpigsaw.aternos.me', // <--- REEMPLAZA ESTO POR LA IP DE TU SERVER
-        port: 30396,                // Puerto predeterminado de Minecraft
-        username: 'BotterPilly',    // Nombre genérico del bot/NPC dentro del juego
-        version: false              // Autodetecta la versión exacta del servidor (1.8 a 1.21+)
-    });
-
-    bot.on('spawn', () => {
-        console.log(`[NPC] El bot ha aparecido correctamente en el mapa.`);
-        // Si tu servidor No-Premium requiere contraseña, descomenta la línea de abajo:
-        setTimeout(() => bot.chat('/login 123456'), 4000);
+        host: 'survivalpigsaw.aternos.me',
+        port: 30396,
+        username: 'BotterPilly',
+        version: false
     });
 
     bot.on('login', () => {
-        console.log(`[NPC] Conexión establecida con el servidor de Minecraft.`);
+        console.log(`[NPC] Conexión establecida.`);
     });
 
-    // Rutina automatizada del NPC: Buscar cofre, interactuar, cerrar y saltar (Cada 45 segundos)
-    setInterval(async () => {
-        if (!bot || !bot.entity) return;
+    bot.on('spawn', () => {
+        console.log(`[NPC] Bot spawneado correctamente.`);
+        
+        // Auto login (cambia la contraseña si es otra)
+        setTimeout(() => {
+            bot.chat('/login 123456'); // <-- PON AQUÍ LA CONTRASEÑA REAL DEL BOT
+        }, 3000);
 
-        try {
-            // 1. Localizar el bloque de cofre en un radio de 5 bloques
-            const chestBlock = bot.findBlock({
-                matching: bot.registry.blocksByName.chest.id,
-                maxDistance: 5
-            });
+        // Empezar el movimiento humano
+        startHumanMovement(bot);
+    });
 
-            if (chestBlock) {
-                console.log('[NPC] Interactuando con el contenedor cercano...');
-                
-                // 2. Abrir el contenedor (genera la animación y sonido físico en el servidor)
-                const chest = await bot.openChest(chestBlock);
-                console.log('[NPC] Contenedor abierto.');
-                
-                // Mantener la interfaz abierta durante 2 segundos simulando actividad de inventario
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // 3. Cerrar la interfaz del contenedor
-                chest.close();
-                console.log('[NPC] Contenedor cerrado.');
-            } else {
-                console.log('[NPC] Aviso: No se detectó ningún contenedor válido cerca.');
+    // Sistema de movimiento más humano
+    function startHumanMovement(bot) {
+        setInterval(() => {
+            if (!bot.entity) return;
+
+            // Mirar a un lado random
+            const yaw = Math.random() * Math.PI * 2;
+            const pitch = (Math.random() - 0.5) * 0.5;
+            bot.look(yaw, pitch, true);
+
+            // Caminar un poco random
+            const actions = ['forward', 'back', 'left', 'right'];
+            const action = actions[Math.floor(Math.random() * actions.length)];
+            
+            bot.setControlState(action, true);
+            setTimeout(() => {
+                bot.setControlState(action, false);
+            }, 800 + Math.random() * 1200); // camina entre 0.8 y 2 segundos
+
+            // Saltar de vez en cuando
+            if (Math.random() < 0.4) {
+                setTimeout(() => {
+                    bot.setControlState('jump', true);
+                    setTimeout(() => bot.setControlState('jump', false), 400);
+                }, 500);
             }
 
-            // 4. Ejecutar acción de salto físico para evitar la inactividad (Anti-AFK)
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            bot.setControlState('jump', true);
-            setTimeout(() => bot.setControlState('jump', false), 500);
-            console.log('[NPC] Acción anti-inactividad completada con éxito.');
+            // Balancear el brazo
+            if (Math.random() < 0.3) {
+                bot.swingArm();
+            }
 
-        } catch (err) {
-            console.log(`[NPC] Error en el ciclo de ejecución: ${err.message}`);
-        }
-    }, 45000);
+        }, 6000 + Math.random() * 4000); // cada 6-10 segundos hace algo
+    }
 
-    // Sistema de auto-reconexión segura tras expulsiones o reinicios del servidor
+    // Auto-reconexión
     bot.on('end', (reason) => {
-        console.log(`[NPC] Conexión finalizada por: ${reason}. Reintentando en 25 segundos...`);
-        setTimeout(createBot, 25000);
+        console.log(`[NPC] Desconectado: ${reason}. Reconectando en 20 segundos...`);
+        setTimeout(createBot, 20000);
     });
 
-    bot.on('error', (err) => console.log(`[NPC] Error crítico de red detectado: ${err}`));
+    bot.on('error', (err) => {
+        console.log(`[NPC] Error: ${err}`);
+    });
+
+    bot.on('kicked', (reason) => {
+        console.log(`[NPC] Kickeado: ${reason}`);
+    });
 }
 
 createBot();
