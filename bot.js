@@ -1,76 +1,63 @@
 const mineflayer = require('mineflayer');
 
 function createBot() {
+    console.log('[BOT] Intentando conectar...');
+
     const bot = mineflayer.createBot({
         host: 'survivalpigsaw.aternos.me',
         port: 30396,
         username: 'BotterPilly',
-        version: false
+        version: false,
+        hideErrors: true
     });
 
-    bot.on('login', () => {
-        console.log(`[NPC] Conexión establecida.`);
-    });
-
-    bot.on('spawn', () => {
-        console.log(`[NPC] Bot spawneado correctamente.`);
+    bot.once('spawn', () => {
+        console.log('[BOT] ¡Entró correctamente!');
         
-        // Auto login (cambia la contraseña si es otra)
+        // Auto login (cambia la contraseña)
         setTimeout(() => {
-            bot.chat('/login 123456'); // <-- PON AQUÍ LA CONTRASEÑA REAL DEL BOT
-        }, 3000);
+            bot.chat('/login yeribel'); // <-- AQUÍ PON LA CONTRASEÑA CORRECTA
+            console.log('[BOT] Intentando login...');
+        }, 2500);
 
-        // Empezar el movimiento humano
-        startHumanMovement(bot);
-    });
-
-    // Sistema de movimiento más humano
-    function startHumanMovement(bot) {
+        // Movimiento suave cada 8-12 segundos
         setInterval(() => {
             if (!bot.entity) return;
 
-            // Mirar a un lado random
-            const yaw = Math.random() * Math.PI * 2;
-            const pitch = (Math.random() - 0.5) * 0.5;
-            bot.look(yaw, pitch, true);
+            // Mirar random
+            bot.look(Math.random() * Math.PI * 2, (Math.random() - 0.5) * 0.6, true);
 
-            // Caminar un poco random
-            const actions = ['forward', 'back', 'left', 'right'];
-            const action = actions[Math.floor(Math.random() * actions.length)];
+            // Caminar un poquito
+            const dirs = ['forward', 'back', 'left', 'right'];
+            const dir = dirs[Math.floor(Math.random() * dirs.length)];
+            bot.setControlState(dir, true);
             
-            bot.setControlState(action, true);
             setTimeout(() => {
-                bot.setControlState(action, false);
-            }, 800 + Math.random() * 1200); // camina entre 0.8 y 2 segundos
+                bot.setControlState(dir, false);
+            }, 600 + Math.random() * 900);
 
-            // Saltar de vez en cuando
-            if (Math.random() < 0.4) {
+            // Saltar a veces
+            if (Math.random() < 0.35) {
                 setTimeout(() => {
                     bot.setControlState('jump', true);
-                    setTimeout(() => bot.setControlState('jump', false), 400);
-                }, 500);
+                    setTimeout(() => bot.setControlState('jump', false), 350);
+                }, 400);
             }
 
-            // Balancear el brazo
-            if (Math.random() < 0.3) {
-                bot.swingArm();
-            }
-
-        }, 6000 + Math.random() * 4000); // cada 6-10 segundos hace algo
-    }
-
-    // Auto-reconexión
-    bot.on('end', (reason) => {
-        console.log(`[NPC] Desconectado: ${reason}. Reconectando en 20 segundos...`);
-        setTimeout(createBot, 20000);
-    });
-
-    bot.on('error', (err) => {
-        console.log(`[NPC] Error: ${err}`);
+        }, 8000 + Math.random() * 4000);
     });
 
     bot.on('kicked', (reason) => {
-        console.log(`[NPC] Kickeado: ${reason}`);
+        console.log('[BOT] Kickeado:', reason);
+    });
+
+    bot.on('error', (err) => {
+        console.log('[BOT] Error:', err.message);
+    });
+
+    bot.on('end', () => {
+        console.log('[BOT] Se desconectó. Reintentando en 30 segundos...');
+        setTimeout(createBot, 30000); // 30 segundos de espera
     });
 }
 
